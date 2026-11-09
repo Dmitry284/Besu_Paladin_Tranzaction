@@ -1,0 +1,10 @@
+node_modules/
+.env
+*.log
+dist/
+cache/
+artifacts/
+typechain-types/
+# Никогда не коммить приватные ключи, даже тестовые!
+**/accountPrivateKey
+**/paladin.key
