@@ -1,27 +1,53 @@
 # Hyperledger Besu + Paladin: Private Transaction Demo
 
-Этот проект демонстрирует работу приватных транзакций в корпоративной блокчейн-сети с использованием Hyperledger Besu и менеджера приватности Paladin (протокол Noto).
+Демонстрация работы приватных транзакций в корпоративной блокчейн-сети с использованием Hyperledger Besu и менеджера приватности Paladin (протокол Noto).
 
 ## Цель проекта
-Показать, как участники сети могут обмениваться токенами так, что детали транзакции (сумма, отправитель, получатель) видны только вовлеченным сторонам, в то время как публичный реестр содержит только зашифрованный маркер (Privacy Marker Transaction).
 
-## Стек технологий
-- **Blockchain:** Hyperledger Besu (QBFT consensus)
+Показать, как участники сети могут обмениваться токенами так, что детали транзакции (сумма, отправитель, получатель) видны только вовлеченным сторонам, а в публичный реестр записывается только зашифрованный маркер (Privacy Marker Transaction).
+
+## 🛠 Стек технологий
+
+- **Blockchain:** Hyperledger Besu 26.2.0 (QBFT consensus)
 - **Privacy Manager:** Paladin (Noto protocol)
 - **Smart Contracts / Scripts:** TypeScript, Hardhat, Paladin SDK
 - **Infrastructure:** Docker, Docker Compose
+- **Block Explorer:** Chainlens
 
-## Как это работает 
-Скрипт `scripts/privacy/noto_tx.ts` выполняет следующую последовательность:
-1. **Deploy:** Развертывание приватного токена Noto, где `member1` выступает в роли нотариуса (notary).
-2. **Mint:** Выпуск 2000 токенов для `member1`.
-3. **Private Transfer 1:** Приватный перевод 1000 токенов от `member1` к `member2`.
-4. **Private Transfer 2:** Приватный перевод 800 токенов от `member2` к `member3`.
-5. **Verification:** Проверка финальных балансов, подтверждающая корректность приватных вычислений.
+##  Архитектура сети
 
-## Как запустить локально
+Сеть состоит из ~20 контейнеров Docker, разделенных на три слоя:
 
-1. Запустите тестовую сеть Besu + Paladin через Docker:
-   ```bash
-   npx @consensys-software/besu-dev-quickstart --networkType private --privacy true
-   cd besu-test-network && ./run.sh
+### Слой блокчейна (Hyperledger Besu)
+- `rpcnode` — точка входа для внешних запросов (порт 8545)
+- `validator1-4` — ноды-валидаторы консенсуса QBFT
+- `member1-3` — ноды участников сети
+
+### Слой приватности (Paladin)
+- `paladin1-3` — сервисы шифрования и маршрутизации приватных данных
+
+### Слой наблюдаемости (Chainlens)
+- `chainlensingestion` — сервис чтения блоков из Besu
+- `chainlensmongodb`, `chainlensredis` — база данных и кэш
+- `chainlensapi`, `chainlensweb`, `chainlensnginx` — веб-интерфейс (порт 8081)
+
+## Как запустить
+
+### Предварительные требования
+- Ubuntu 20.04+ (Linux)
+- Docker и Docker Compose v2.0+
+- Node.js 18+
+- Минимум 8 ГБ RAM (рекомендуется 16 ГБ)
+
+### Шаг 1: Развертывание сети
+
+```bash
+npx @consensys-software/besu-dev-quickstart \
+    --networkType private \
+    --privacy true \
+    --chainlens true \
+    --otel false \
+    --outputPath ./besu-test-network
+
+cd besu-test-network
+./run.sh
